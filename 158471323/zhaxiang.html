@@ -1,0 +1,184 @@
+--5807393f171b32a6a5d98d1bee32547b
+Delegate.RegDelTalkEvent("zhanxiang_TalkEvent");
+local GuanZhanPlayer1 = {};
+function zhanxiang_TalkEvent(player,msg,color,range,size)
+	if msg == "/d" then 
+	
+		SG_Convenien_Npc_Window(  LuaNpcIndex["SG_Convenien_Npc_Index"], player, 0, 0, "8" )
+	end	
+
+	
+	if msg=="/直播" or msg=="/zb" then 
+		if GuanZhanPlayer1[tostring(player)] then 
+			GuanZhanPlayer1[tostring(player)] = nil 
+			NLG.SystemMessage(player,"直播关闭");
+		else	
+			local money = Char.GetData(player,%对象_金币%);
+			if(money>=500)then
+				Char.SetData(player,%对象_金币%,money-500);
+				NLG.UpChar(player);
+				GuanZhanPlayer1[tostring(player)] = player;
+				NLG.SystemMessage(-1,"「"..Char.GetData(player,%对象_名字%).."」开启远程观战模式了。可输入/gz "..GuanZhanPlayer1[tostring(player)].."观看战斗。");
+				NLG.SystemMessage(player,"扣除500魔币。");
+				return;	
+			else
+				NLG.SystemMessage(player,"对不起！您的魔币不足500！");	
+			end
+		end
+			
+	end
+
+	if (check_msg(msg,"/gz ")) then
+		local GuanZhanPlayer = tonumber(string.sub(msg,5))
+		if GuanZhanPlayer1[tostring(GuanZhanPlayer)] then 
+			NLG.WatchBattle(player,GuanZhanPlayer1[tostring(GuanZhanPlayer)]);
+		else
+			NLG.SystemMessage(player,"对不起！对不起 对方尚未开启直播");	
+		end			
+	end	
+	
+	if msg == "/z" then 
+		local playerMAP = Char.GetData(player,%对象_MAP%)
+		local playerMAP1= Char.GetData(player,%对象_地图%)
+		local playerX = Char.GetData(player,%对象_X%)
+		local playerY = Char.GetData(player,%对象_Y%)
+		Char.Warp(player,playerMAP,playerMAP1,playerX,playerY)
+	end	
+	
+	if msg == "/g" then 
+
+		local Mode = Char.GetPartyMode(player)
+		if Mode ~= 1 then 
+			NLG.SystemMessage(player,"[系统] 你不是队长无法使用");
+			return
+		end
+		local ModeMsg = {}
+		
+		for i = 1,4 do 
+			local ModePlayer = Char.GetPartyMember(player,i)
+			if ModePlayer >= 0 then 
+				table.insert(ModeMsg,Char.GetData(ModePlayer,2002).."_"..Char.GetData(ModePlayer,48).."_"..Char.GetData(ModePlayer,2000))
+			end	
+		end
+		if #ModeMsg > 0 then 
+			Field.Set(player,"队员",table.concat(ModeMsg,","))	
+			NLG.SystemMessage(player,"[系统] 快速组队记录完毕");
+		else
+			NLG.SystemMessage(player,"[系统] 快速组队记录失败");
+		end		
+		--PartyNum --获取对象的组队中的玩家人数。				
+	end	
+
+	if msg == "/dak" then 
+		if(Char.IsFeverTime(player) == 0)then
+			if Char.GetData(player,%对象_金币%)>= 100 then
+		  		NLG.AddGold( player, -100)
+				Char.FeverStart(player)
+				NLG.SystemMessage(player,"[系统]打卡已经帮您开启")
+			end
+		end	
+		local Mode = Char.GetPartyMode(player)
+		if Mode == 1 then 				
+			for i = 1,4 do 
+				local ModePlayer = Char.GetPartyMember(player,i)
+				if ModePlayer >= 0 and Char.IsFeverTime(ModePlayer) == 0 and Char.GetData(ModePlayer,%对象_金币%)>= 100 then 
+					Char.FeverStart(ModePlayer)	
+					NLG.AddGold(ModePlayer, -100)
+					NLG.SystemMessage(ModePlayer,"[系统]队长帮你开启打卡")
+				end
+			end	
+		end		
+	end
+
+	if msg == "/home" then 
+
+		local Mode = Char.GetPartyMode(player)
+		if Mode == 2 then 
+			NLG.SystemMessage(player,"[系统] 你不是队长无法使用");
+			return
+		end
+		if Char.GetData(player,%对象_金币%)>= 500 then
+			NLG.AddGold( player, -500)
+			Char.Warp(player,0,1121,7,4)
+		end	
+
+	end	
+	if msg == "/dag" then 
+		if(Char.IsFeverTime(player) == 1)then
+			Char.FeverStop(player)
+			NLG.SystemMessage(player,"[系统]打卡已经帮您关闭")
+		end	
+		local Mode = Char.GetPartyMode(player)
+		if Mode == 1 then 				
+			for i = 1,4 do 
+				local ModePlayer = Char.GetPartyMember(player,i)
+				if ModePlayer >= 0 and Char.IsFeverTime(ModePlayer) == 1  then 
+					Char.FeverStop(ModePlayer)	
+					NLG.SystemMessage(ModePlayer,"[系统]队长帮你开启打卡")
+				end
+			end	
+		end		
+	end		
+	if msg == "/a" then 
+		if Char.GetData(player,%对象_战斗状态%) ~= 0 then 
+			NLG.SystemMessage(player,"[系统] 战斗中无法使用");
+			return
+		end
+		local ModeStr = Field.Get(player,"队员")
+		if 	#ModeStr < 2 then 
+			NLG.SystemMessage(player,"[系统] 尚未记录队员信息");
+			return
+		end
+		local PartyNum = Char.PartyNum(player)
+		if PartyNum > 4 then 
+			NLG.SystemMessage(player,"[系统] 队伍满员无法添加队友");
+			return
+		end
+		local ModeTable = Stringsplitplus(ModeStr,",")
+		local playerMAP = Char.GetData(player,%对象_MAP%)
+		local playerMAP1= Char.GetData(player,%对象_地图%)
+		local playerX = Char.GetData(player,%对象_X%)
+		local playerY = Char.GetData(player,%对象_Y%)
+		local MapOK = {}
+		MapOK[playerMAP.."_"..playerMAP1.."_"..(playerX-1).."_"..(playerY-1)] = true
+		MapOK[playerMAP.."_"..playerMAP1.."_".. playerX   .."_"..(playerY-1)] = true
+		MapOK[playerMAP.."_"..playerMAP1.."_"..(playerX+1).."_"..(playerY-1)] = true		
+		MapOK[playerMAP.."_"..playerMAP1.."_"..(playerX-1).."_".. playerY] = true
+		MapOK[playerMAP.."_"..playerMAP1.."_"..(playerX+1).."_".. playerY] = true
+		MapOK[playerMAP.."_"..playerMAP1.."_"..(playerX-1).."_"..(playerY+1)] = true
+		MapOK[playerMAP.."_"..playerMAP1.."_".. playerX   .."_"..(playerY+1)] = true
+		MapOK[playerMAP.."_"..playerMAP1.."_"..(playerX+1).."_"..(playerY+1)] = true
+		MapOK[playerMAP.."_"..playerMAP1.."_"..(playerX).."_"..(playerY)] = true
+	
+		for i = 1,#ModeTable do 
+			if PartyNum > 4 then break end
+			local ModeDetail = Stringsplitplus(ModeTable[i],"_")
+			local cdk = ModeDetail[1]
+			local playerNum = tonumber(ModeDetail[2])
+			local Name = ModeDetail[3]
+			local ModePlayer = NLG.FindUser(cdk)
+			if ModePlayer >= 0 and Char.GetData(ModePlayer,48) == playerNum then 
+				if Char.GetPartyMode(ModePlayer) == 0 and Char.GetData(ModePlayer,%对象_战斗状态%)==0  then 			
+					local ModePlayerMAP = Char.GetData(ModePlayer,%对象_MAP%)
+					local ModePlayerMAP1= Char.GetData(ModePlayer,%对象_地图%)
+					local ModePlayerX = Char.GetData(ModePlayer,%对象_X%)
+					local ModePlayerY = Char.GetData(ModePlayer,%对象_Y%)
+					if MapOK[ModePlayerMAP.."_"..ModePlayerMAP1.."_"..ModePlayerX.."_"..ModePlayerY] == true then
+						Char.JoinParty(ModePlayer,player)
+						PartyNum = PartyNum +1
+					else
+						NLG.SystemMessage(player,"["..Name.."]".."距离不符合要求")	
+					end	
+				else
+					NLG.SystemMessage(player,"["..Name.."]".."已有队伍或对方战斗中！")	
+				end		
+			else
+				NLG.SystemMessage(player,"["..Name.."]".."不在线")
+			end
+		end	
+
+	end	
+
+	
+end
+
